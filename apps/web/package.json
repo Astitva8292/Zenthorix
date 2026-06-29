@@ -12,9 +12,11 @@
     "clean": "rm -rf .next dist"
   },
   "dependencies": {
+    "@auth/drizzle-adapter": "^1.11.2",
     "@zenthorix/core": "workspace:*",
     "@zenthorix/ui": "workspace:*",
     "next": "^15.2.0",
+    "next-auth": "5.0.0-beta.31",
     "next-themes": "^0.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
