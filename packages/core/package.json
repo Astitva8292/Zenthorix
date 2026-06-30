@@ -21,6 +21,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@zenthorix/provider-sdk": "workspace:*",
     "zustand": "^5.0.0"
   }
 }

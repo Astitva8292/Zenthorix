@@ -17,6 +17,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@zenthorix/core": "workspace:*"
+    "@zenthorix/core": "workspace:*",
+    "@zenthorix/provider-sdk": "workspace:*",
+    "@zenthorix/token-engine": "workspace:*"
   }
 }

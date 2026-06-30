@@ -1,9 +1,9 @@
-import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('user', {
   id: text('id').primaryKey(),
   name: text('name'),
-  email: text('email').notNull(),
+  email: text('email').notNull().unique(),
   emailVerified: integer('emailVerified', { mode: 'timestamp_ms' }),
   image: text('image'),
 })
@@ -26,17 +26,14 @@ export const accounts = sqliteTable(
     session_state: text('session_state'),
   },
   (account) => ({
-    compoundKey: primaryKey({
-      columns: [account.provider, account.providerAccountId],
-    }),
+    compoundKey: primaryKey({ columns: [account.provider, account.providerAccountId] }),
+    userIdIdx: index('account_user_id_idx').on(account.userId),
   }),
 )
 
 export const sessions = sqliteTable('session', {
   sessionToken: text('sessionToken').primaryKey(),
-  userId: text('userId')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   expires: integer('expires', { mode: 'timestamp_ms' }).notNull(),
 })
 
@@ -52,9 +49,18 @@ export const verificationTokens = sqliteTable(
   }),
 )
 
+export const apiKeys = sqliteTable('api_keys', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  provider: text('provider', { enum: ['openai', 'anthropic', 'openrouter'] }).notNull(),
+  encryptedKey: text('encrypted_key').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+})
+
 export const conversations = sqliteTable('conversations', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
@@ -62,7 +68,7 @@ export const conversations = sqliteTable('conversations', {
 
 export const messages = sqliteTable('messages', {
   id: text('id').primaryKey(),
-  conversationId: text('conversation_id').notNull().references(() => conversations.id),
+  conversationId: text('conversation_id').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
   role: text('role', { enum: ['user', 'assistant', 'system'] }).notNull(),
   content: text('content').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
@@ -70,7 +76,7 @@ export const messages = sqliteTable('messages', {
 
 export const vfsSnapshots = sqliteTable('vfs_snapshots', {
   id: text('id').primaryKey(),
-  conversationId: text('conversation_id').notNull().references(() => conversations.id),
+  conversationId: text('conversation_id').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
   snapshot: text('snapshot').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
