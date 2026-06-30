@@ -26,7 +26,7 @@ export class OllamaProvider extends BaseProvider {
   async generate(options: ChatCompletionOptions): Promise<ChatCompletionResult> {
     const res = await this.request(options, false)
     if (!res.ok) throw new Error(`Ollama API error: ${res.status}`)
-    const json = await res.json()
+    const json: any = await res.json()
     return {
       id: json.created_at ?? Date.now().toString(),
       model: json.model,
@@ -52,7 +52,7 @@ export class OllamaProvider extends BaseProvider {
       for (const line of lines) {
         if (!line.trim()) continue
         try {
-          const json = JSON.parse(line)
+          const json: any = JSON.parse(line)
           const content = json.message?.content
           if (content) yield content
           if (json.done) return
@@ -65,7 +65,7 @@ export class OllamaProvider extends BaseProvider {
     try {
       const res = await fetch(`${this.baseUrl}/api/tags`)
       if (!res.ok) return []
-      const json = await res.json()
+      const json: any = await res.json()
       return (json.models ?? []).map((m: { name: string; details?: { parameter_size?: string } }) => ({
         id: m.name,
         name: m.name,

@@ -26,7 +26,7 @@ export class AnthropicProvider extends BaseProvider {
       }),
     })
     if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`)
-    const json = await res.json()
+    const json: any = await res.json()
     return {
       id: json.id,
       model: json.model,
@@ -58,7 +58,7 @@ export class AnthropicProvider extends BaseProvider {
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           try {
-            const json = JSON.parse(line.slice(6))
+            const json: any = JSON.parse(line.slice(6))
             if (json.type === 'content_block_delta' && json.delta?.text) yield json.delta.text
           } catch {}
         }

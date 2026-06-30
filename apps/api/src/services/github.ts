@@ -11,7 +11,8 @@ export class GitHubService {
         headers: { Authorization: `Bearer ${this.token}`, Accept: 'application/vnd.github.v3+json' },
       })
       if (!res.ok) return null
-      return res.json()
+      const data = await res.json() as { login: string; id: number }
+      return data
     } catch { return null }
   }
 
@@ -21,7 +22,8 @@ export class GitHubService {
         headers: { Authorization: `Bearer ${this.token}`, Accept: 'application/vnd.github.v3+json' },
       })
       if (!res.ok) return null
-      return res.json()
+      const data = await res.json() as { name: string; defaultBranch: string }
+      return data
     } catch { return null }
   }
 }

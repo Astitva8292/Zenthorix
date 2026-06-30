@@ -13,6 +13,10 @@
     "./stores": {
       "types": "./dist/stores/index.d.ts",
       "import": "./dist/stores/index.js"
+    },
+    "./crdt": {
+      "types": "./dist/crdt/sync.d.ts",
+      "import": "./dist/crdt/sync.js"
     }
   },
   "scripts": {

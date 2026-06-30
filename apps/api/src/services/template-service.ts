@@ -13,5 +13,5 @@ const TEMPLATES: Record<string, Record<string, string>> = {
 export class TemplateService {
   getTemplates(): string[] { return Object.keys(TEMPLATES) }
   getTemplate(name: string): Record<string, string> | undefined { return TEMPLATES[name] }
-  scaffold(name: string): Record<string, string> { return { ...TEMPLATES[name] } ?? {} }
+  scaffold(name: string): Record<string, string> { return TEMPLATES[name] ?? {} }
 }

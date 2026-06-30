@@ -9,7 +9,7 @@ export class VercelDeployService {
         body: JSON.stringify({ name: projectName, framework: 'nextjs' }),
       })
       if (!projectRes.ok) return { error: 'Failed to create Vercel project' }
-      const project = await projectRes.json()
+      const project = await projectRes.json() as { id: string }
 
       const deployRes = await fetch(`https://api.vercel.com/v13/deployments`, {
         method: 'POST',
@@ -17,7 +17,7 @@ export class VercelDeployService {
         body: JSON.stringify({ name: projectName, project: project.id, files: [] }),
       })
       if (!deployRes.ok) return { error: 'Deployment failed' }
-      const deploy = await deployRes.json()
+      const deploy = await deployRes.json() as { url: string }
       return { url: deploy.url }
     } catch (err: any) {
       return { error: err.message }

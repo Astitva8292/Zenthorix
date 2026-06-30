@@ -21,7 +21,7 @@ export class DeepSeekProvider extends BaseProvider {
       body: JSON.stringify(this.buildBody(options, false)),
     })
     if (!res.ok) throw new Error(`DeepSeek API error: ${res.status}`)
-    const json = await res.json()
+    const json: any = await res.json()
     return {
       id: json.id, model: json.model,
       content: json.choices[0].message.content,
@@ -50,7 +50,7 @@ export class DeepSeekProvider extends BaseProvider {
           const data = line.slice(6)
           if (data === '[DONE]') return
           try {
-            const json = JSON.parse(data)
+            const json: any = JSON.parse(data)
             const delta = json.choices?.[0]?.delta?.content
             if (delta) {
               const thought = delta.match(/<think>(.*?)<\/think>/)?.[1]

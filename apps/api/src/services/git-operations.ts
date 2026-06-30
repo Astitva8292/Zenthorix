@@ -20,7 +20,7 @@ export class GitOperations {
         body: JSON.stringify({ title, head, base, body: 'Automated PR by Zenthorix AI' }),
       })
       if (!res.ok) return null
-      const data = await res.json()
+      const data = await res.json() as { html_url: string }
       return data.html_url
     } catch { return null }
   }

@@ -16,7 +16,7 @@ export class OpenAIProvider extends BaseProvider {
       body: JSON.stringify({ model: options.model, messages: options.messages, temperature: options.temperature, max_tokens: options.maxTokens }),
     })
     if (!res.ok) throw new Error(`OpenAI API error: ${res.status}`)
-    const json = await res.json()
+    const json: any = await res.json()
     return {
       id: json.id,
       model: json.model,
@@ -46,7 +46,7 @@ export class OpenAIProvider extends BaseProvider {
           const data = line.slice(6)
           if (data === '[DONE]') return
           try {
-            const json = JSON.parse(data)
+            const json: any = JSON.parse(data)
             const content = json.choices?.[0]?.delta?.content
             if (content) yield content
           } catch {}

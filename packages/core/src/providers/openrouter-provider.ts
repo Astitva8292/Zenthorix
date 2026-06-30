@@ -24,7 +24,7 @@ export class OpenRouterProvider extends BaseProvider {
       body: JSON.stringify(this.buildBody(options, false)),
     })
     if (!res.ok) throw new Error(`OpenRouter API error: ${res.status}`)
-    const json = await res.json()
+    const json: any = await res.json()
     return {
       id: json.id, model: json.model,
       content: json.choices[0].message.content,
@@ -53,7 +53,7 @@ export class OpenRouterProvider extends BaseProvider {
           const data = line.slice(6)
           if (data === '[DONE]') return
           try {
-            const json = JSON.parse(data)
+            const json: any = JSON.parse(data)
             const delta = json.choices?.[0]?.delta?.content
             if (delta) yield delta
           } catch {}
@@ -67,7 +67,7 @@ export class OpenRouterProvider extends BaseProvider {
       headers: { Authorization: `Bearer ${this.apiKey}` },
     })
     if (!res.ok) return []
-    const json = await res.json()
+    const json: any = await res.json()
     return json.data.map((m: { id: string; name?: string; context_length?: number; top_provider?: { max_completion_tokens?: number }; pricing?: { prompt?: number; completion?: number } }) => ({
       id: m.id,
       name: m.name ?? m.id,

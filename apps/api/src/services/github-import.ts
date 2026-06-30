@@ -13,8 +13,8 @@ export class GitHubImporter {
     })
     if (!res.ok) throw new Error(`Failed to fetch repo tree: ${res.status}`)
 
-    const tree = await res.json()
-    const blobs = tree.tree?.filter((item: any) => item.type === 'blob') ?? []
+    const tree = await res.json() as { tree?: { type: string; url: string; path: string }[] }
+    const blobs = tree.tree?.filter((item) => item.type === 'blob') ?? []
 
     for (const blob of blobs.slice(0, 100)) {
       try {
@@ -22,9 +22,9 @@ export class GitHubImporter {
           headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' },
         })
         if (contentRes.ok) {
-          const data = await contentRes.json()
+          const data = await contentRes.json() as { content?: string }
           if (data.content) {
-            files.push({ path: blob.path, content: Buffer.from(data.content, 'base64').toString('utf-8') })
+            files.push({ path: (blob as any).path, content: Buffer.from(data.content, 'base64').toString('utf-8') })
           }
         }
       } catch { /* skip failed files */ }

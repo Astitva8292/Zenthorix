@@ -1,8 +1,10 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
+import globals from 'globals'
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**"] },
+  { ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**", "**/*.d.ts"] },
+  { languageOptions: { globals: { ...globals.node, ...globals.browser } } },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -10,6 +12,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': 'warn',
+      'no-empty': ['error', { allowEmptyCatch: true }],
     },
   },
 )
