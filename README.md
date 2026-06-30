@@ -13,6 +13,36 @@
 
 ---
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [First Launch](#first-launch)
+- [Connecting AI Providers](#connecting-ai-providers)
+- [Creating Your First Project](#creating-your-first-project)
+- [Plugin Installation](#plugin-installation)
+- [Updating Zenthorix](#updating-zenthorix)
+- [Troubleshooting](#troubleshooting)
+- [Architecture](#architecture)
+- [Repository Structure](#repository-structure)
+- [Technology Stack](#technology-stack)
+- [Plugin System](#plugin-system)
+- [Multi-Agent Workflow](#multi-agent-workflow)
+- [Token Optimization](#token-optimization)
+- [Security](#security)
+- [Performance](#performance)
+- [Development](#development)
+- [Contributing](#contributing)
+- [Roadmap](#roadmap)
+- [FAQ](#faq)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+
+---
+
 ## Introduction
 
 Zenthorix is an open-source, AI-native development environment. Instead of writing code line by line, you describe what you want in natural language and a team of autonomous AI agents plans, implements, reviews, tests, and deploys it.
@@ -57,6 +87,7 @@ Zenthorix is early-stage and evolving rapidly. Some UI surfaces render mock data
 | **Plugin System** | Plugin registry (register, unregister, query by hook) | Implemented |
 | **Plugin System** | Example linter plugin (auto-whitespace cleanup) | Implemented |
 | **Plugin System** | Asset generator plugin interface | Interface only |
+| **Plugin System** | Plugin marketplace UI with install flow | Planned |
 | **IDE** | File tree with expand/collapse, active file highlighting | Implemented |
 | **IDE** | Virtual file system (read, write, delete, patch, snapshots, history) | Implemented |
 | **IDE** | Code editor (textarea-based, no syntax highlighting) | Implemented |
@@ -71,7 +102,6 @@ Zenthorix is early-stage and evolving rapidly. Some UI surfaces render mock data
 | **IDE** | In-memory linter (debugger/var warnings) | Implemented |
 | **Chat** | Chat interface with message bubbles | Mock |
 | **Chat** | Streaming response simulation | Mock |
-| **Chat** | Activity feed (agent actions) | Mock |
 | **Chat** | Command palette (Cmd+K, file/build/theme/settings) | Implemented |
 | **Chat** | Context inspector (full prompt view) | Implemented |
 | **Terminal** | Tabbed multi-terminal UI | Implemented |
@@ -88,6 +118,7 @@ Zenthorix is early-stage and evolving rapidly. Some UI surfaces render mock data
 | **Deployment** | Git operations (branch creation, PR) via GitHub API | Implemented |
 | **Deployment** | GitHub import (repository tree + file extraction) | Implemented |
 | **Deployment** | Project scaffolding from templates (Next.js, Express) | Implemented |
+| **Deployment** | One-click deployment UI | Planned |
 | **Security** | AES-256-GCM encryption with scrypt key derivation | Implemented |
 | **Security** | GitHub OAuth (NextAuth v5, JWT sessions) | Implemented |
 | **Security** | Role-based access control (owner, admin, member, viewer) | Implemented |
@@ -129,28 +160,421 @@ Zenthorix is early-stage and evolving rapidly. Some UI surfaces render mock data
 
 ---
 
-## Screenshots
+## Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| **Operating Systems** | macOS, Windows, Linux | Developed and tested on macOS and Linux |
+| **Node.js** | >= 22 | Required by all packages. Older versions are not supported. |
+| **pnpm** | >= 10 | The monorepo uses pnpm workspaces. npm and Yarn are not supported. |
+| **Git** | >= 2.0 | Required for cloning the repository |
+| **Docker** | Not required | Docker is **not** required to run Zenthorix. A `DockerSecurity` utility class exists in the codebase for building container security policies, but no Docker configuration or containerization is implemented. |
+
+### Recommended Tools
+
+- **Chrome** or **Firefox** for the best IDE experience
+- **nvm** or **fnm** for managing multiple Node.js versions
+
+---
+
+## Installation
+
+### Step 1: Install Node.js
+
+Zenthorix requires **Node.js 22 or later**. Download it from the official website:
+
+- **macOS**: `brew install node@22`
+- **Linux**: Use `nvm install 22` or your package manager
+- **Windows**: Download from [nodejs.org](https://nodejs.org)
+
+Verify your installation:
+
+```bash
+node --version
+# Should print v22.x.x or higher
+```
+
+### Step 2: Install pnpm
+
+pnpm is the only supported package manager. Install it globally:
+
+```bash
+npm install -g pnpm@10.4.0
+```
+
+Verify:
+
+```bash
+pnpm --version
+# Should print 10.4.0
+```
+
+> Zenthorix was developed with pnpm 10.4.0. While newer versions may work, 10.4.0 is the tested version.
+
+### Step 3: Clone the Repository
+
+```bash
+git clone https://github.com/Astitva8292/Zenthorix.git
+cd Zenthorix
+```
+
+### Step 4: Install Dependencies
+
+```bash
+pnpm install
+```
+
+This installs all dependencies for all 11 workspace packages. The first install takes 30-60 seconds depending on your network speed.
+
+### Step 5: Configure Environment Variables
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` in any editor and fill in the values (see [Environment Variables](#environment-variables) below).
+
+At minimum, for the IDE to start, you need:
 
 ```
-[Dashboard]              [Chat Interface]         [IDE Workspace]
-    ┌──────┐               ┌──────┐                 ┌──────┐
-    │ Mock │               │ Mock │                 │      │
-    │ grid │               │ chat │                 │ IDE  │
-    │ of   │               │ bub- │                 │ with │
-    │ proj │               │ bles │                 │ file │
-    │ ects │               │      │                 │ tree │
-    └──────┘               └──────┘                 └──────┘
-
-[Settings Dialog]        [Plugin Marketplace]     [Visual Canvas]
-    ┌──────┐               ┌──────┐                 ┌──────┐
-    │Theme,│               │ Mock │                 │ Drag │
-    │API   │               │ plugin│                 │-gable│
-    │keys, │               │ list  │                 │nodes │
-    │budget│               │       │                 │stub  │
-    └──────┘               └──────┘                 └──────┘
+AUTH_SECRET=your-secret-here
+AUTH_GITHUB_ID=placeholder-oauth-client-id
+AUTH_GITHUB_SECRET=placeholder-oauth-client-secret
 ```
 
-> Note: Dashboard, Chat, Marketplace, and Canvas currently render mock data while the underlying agent engine and services are production-ready.
+The `AUTH_SECRET` can be any random string (generate one with `openssl rand -base64 32`). The GitHub OAuth values can be placeholder strings for local development — the IDE will load without authentication, though the login page will redirect to GitHub.
+
+### Step 6: Start the Development Server
+
+```bash
+pnpm --filter=web dev
+```
+
+You will see:
+
+```
+> web@0.1.0 dev apps/web
+> next dev
+
+  ▲ Next.js 15.5.19
+  - Local: http://localhost:3000
+```
+
+> The first compilation takes 30-40 seconds. Subsequent refreshes are near-instant.
+
+### Step 7: Open the Application
+
+Open **http://localhost:3000** in your browser. The Zenthorix IDE loads with a three-panel layout: file explorer on the left, editor in the center, and terminal at the bottom.
+
+---
+
+## Environment Variables
+
+The following environment variables are read from the `.env` file located in the project root.
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `AUTH_SECRET` | **Yes** | NextAuth encryption secret. Used to sign JWT tokens. Generate with `openssl rand -base64 32`. | `skJF72H...` |
+| `AUTH_GITHUB_ID` | **Yes** | GitHub OAuth App client ID. Required for login to work. | `Ov23li...` |
+| `AUTH_GITHUB_SECRET` | **Yes** | GitHub OAuth App client secret. Required for login to work. | `a1b2c3d4...` |
+| `NEXTAUTH_URL` | Optional | The canonical URL of the site. Defaults to `http://localhost:3000`. | `http://localhost:3000` |
+| `DATABASE_URL` | Optional | SQLite database file path. Defaults to `file:local.db`. | `file:local.db` |
+| `ENCRYPTION_KEY` | Optional | AES-256 key (32 characters) used for encrypting sensitive data. If not set, a default key is used. | `a1b2c3d4e5f6g7h8i9j0...` |
+| `OPENAI_API_KEY` | Stored in UI | OpenAI API key. Also accepted in `.env` but primarily configured through the Settings dialog. | `sk-...` |
+| `ANTHROPIC_API_KEY` | Stored in UI | Anthropic API key. Also accepted in `.env` but primarily configured through the Settings dialog. | `sk-ant-...` |
+| `DEEPSEEK_API_KEY` | Reference only | DeepSeek API key. Listed in `.env.example` for reference. Configured through the Settings dialog in a future update. | `sk-...` |
+| `OPENROUTER_API_KEY` | Reference only | OpenRouter API key. Listed in `.env.example` for reference. Configured through the Settings dialog in a future update. | `sk-or-...` |
+
+> **Important**: The `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET` are validated at build time. If they are missing or empty, the page generation will fail with `Missing required environment variable: AUTH_GITHUB_ID`. Use placeholder values for local development if you do not have a GitHub OAuth App set up.
+
+### Setting Up GitHub OAuth (for Login)
+
+1. Go to https://github.com/settings/developers
+2. Click **New OAuth App**
+3. Set **Homepage URL** to `http://localhost:3000`
+4. Set **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`
+5. Copy the **Client ID** and **Client Secret** into your `.env` file
+
+---
+
+## First Launch
+
+### What You See
+
+When you open http://localhost:3000 for the first time, you see the **Zenthorix IDE** workspace:
+
+```
+┌─────────────────────────────────────────────────┐
+│  Explorer    │  Welcome to Zenthorix       │ Terminal │
+│  ─────────   │                              │         │
+│  ○ src/      │  (empty editor area)         │ $       │
+│  ○ package   │                              │         │
+│  ○ tsconfig  │                              │         │
+├──────────────┼──────────────────────────────┴─────────┤
+│              │                                        │
+└──────────────┴────────────────────────────────────────┘
+```
+
+### The Layout
+
+The IDE is divided into three resizable panels:
+
+- **Left sidebar (Explorer)** — File tree with mock files. Use the gear icon at the bottom to open **Settings** (theme, API keys, budget).
+- **Center (Editor)** — The main workspace area. Shows file tabs when files are open. The command palette is accessible via **Cmd+K**.
+- **Bottom (Terminal)** — A mock terminal with a `$` prompt. Type commands to see simulated output.
+
+### Login
+
+Clicking the user icon or navigating to http://localhost:3000/login shows the **Sign in with GitHub** button. Authentication is handled via NextAuth v5 with GitHub OAuth. If you have configured valid GitHub OAuth credentials, clicking the button redirects you to GitHub for authorization.
+
+Without valid GitHub OAuth credentials, you can still use the IDE — login is optional for local development.
+
+### Dashboard
+
+Navigate to http://localhost:3000/dashboard to see a **Workspaces** page with mock project cards. Each card shows a project name, last-modified timestamp, and AI model. Click **+ New Project** to return to the IDE.
+
+> The dashboard currently shows hardcoded mock data.
+
+### Opening the IDE
+
+The main IDE at http://localhost:3000 is the primary workspace. From here you can:
+
+- Browse the file tree (mock files are pre-loaded)
+- Open files by clicking them in the tree
+- Type in the editor (textarea-based, no syntax highlighting yet)
+- Use Cmd+K to open the command palette
+- Click the bell icon for notifications
+- Open Settings via the gear icon
+
+### Starting a Chat
+
+The **Chat Interface** is embedded in the IDE (accessible via the chat tab or panel). Type a message in the input bar at the bottom and press Enter. The assistant responds with a simulated streaming message.
+
+> The current chat uses mock responses. Real AI agent integration is in development.
+
+---
+
+## Connecting AI Providers
+
+AI providers are configured through the **Settings** dialog, accessible from the gear icon in the IDE sidebar.
+
+### Step-by-Step
+
+1. Click the **gear icon** in the bottom-left corner of the IDE
+2. The Settings dialog opens with three tabs: **General**, **Providers**, **Budget**
+3. Click the **Providers** tab
+4. Enter your API key(s):
+   - **OpenAI**: Your OpenAI API key (starts with `sk-...`)
+   - **Anthropic**: Your Anthropic API key (starts with `sk-ant-...`)
+5. Click **Save**
+
+### Where Are Keys Stored?
+
+API keys are stored in **`sessionStorage`** in the browser. They persist for the duration of the browser tab. When you close the tab, they are cleared. This means you need to re-enter keys each time you open Zenthorix in a new session.
+
+> Server-side encrypted storage is implemented in the database (`api_keys` table with AES-256-GCM encryption) but the UI does not yet use it.
+
+### Supported Providers
+
+| Provider | Configured Via | `generate()` | `stream()` | `listModels()` |
+|----------|---------------|:---:|:---:|:---:|
+| **OpenAI** | Settings → Providers (OpenAI API Key field) | Yes | Yes | Yes |
+| **Anthropic (Claude)** | Settings → Providers (Anthropic API Key field) | Yes | Yes | No |
+| **DeepSeek** | `.env` only (no UI field yet) | Yes | Yes | No |
+| **OpenRouter** | `.env` only (no UI field yet) | Yes | Yes | Yes |
+| **Ollama** | No API key needed (runs locally) | Yes | Yes | Yes |
+
+### Using Ollama Locally
+
+If you have Ollama installed and running on `http://localhost:11434`, Zenthorix can connect to it automatically. No API key is required. Supported models include any model you have pulled in Ollama (e.g., `llama3`, `mistral`, `codellama`).
+
+### Provider Selection
+
+When the agent engine processes a task, the `AdaptiveRouter` selects the appropriate provider based on:
+
+- The **model name** requested (e.g., `gpt-4o` routes to OpenAI, `claude-3.5-sonnet` routes to Anthropic)
+- The **context window** required (larger contexts route to providers with bigger windows)
+- The **task complexity** (simpler tasks use cheaper models)
+
+---
+
+## Creating Your First Project
+
+Zenthorix is in active development, and the agent collaboration pipeline — while fully implemented in the `agent-engine` package — is not yet wired to the user interface. The following describes the current state and how to use what is available.
+
+### What You Can Do Now
+
+1. **Open the IDE** at http://localhost:3000
+2. **Browse the file explorer** — mock files are pre-loaded in the tree
+3. **Open and edit files** — click any file in the tree to open it in the editor
+4. **Use the command palette** — press Cmd+K to search, switch themes, or open settings
+5. **Configure AI providers** — add your OpenAI or Anthropic API keys in Settings
+6. **Use the terminal** — type commands in the bottom panel
+7. **View notifications** — click the bell icon
+
+### What's Coming
+
+The multi-agent workflow (describe → plan → code → review → merge → build → debug → deploy) is fully implemented in the `@zenthorix/agent-engine` and `@zenthorix/token-engine` packages. Once the UI wiring is complete, the flow will be:
+
+1. Enter a prompt in the chat interface
+2. The `TaskPlannerAgent` decomposes the request into subtasks
+3. Specialized agents (Developer, Reviewer, Security, etc.) execute in parallel
+4. The `MergeEngine` combines results
+5. The `AgentStateMachine` orchestrates the 9-state workflow
+6. Generated code appears in the file tree
+7. The user reviews diffs and accepts changes
+
+---
+
+## Plugin Installation
+
+Plugin installation is **planned** but not yet implemented.
+
+### Current State
+
+- The **Plugin SDK** (`@zenthorix/plugin-sdk`) is fully implemented with:
+  - A `ZenthorixPlugin` interface with 5 lifecycle hooks
+  - A `PluginRegistry` class for registering, unregistering, and querying plugins
+  - An example `LinterPlugin` in `packages/plugins/`
+- The **Plugin Marketplace** page at http://localhost:3000/marketplace renders **mock plugin data** (Tailwind Formatter, Figma to Code, Dark Theme) with "Install" buttons that do not yet function
+
+### How It Will Work (Planned)
+
+1. Browse the marketplace at `/marketplace`
+2. Click **Install** on a plugin
+3. The plugin is downloaded and registered with the `PluginRegistry`
+4. Enabled plugins appear in a "Plugins" section in the IDE sidebar
+5. Toggle plugins on/off from the settings panel
+6. Remove plugins from the plugin manager in settings
+
+### Building a Plugin (Currently Works)
+
+Plugins can be built programmatically using the SDK. See the [Plugin System](#plugin-system) section for code examples.
+
+---
+
+## Updating Zenthorix
+
+To update to the latest version:
+
+```bash
+# Pull the latest changes
+git pull origin main
+
+# Reinstall dependencies if package.json changed
+pnpm install
+
+# Rebuild all packages
+pnpm build
+
+# Restart the dev server
+pnpm --filter=web dev
+```
+
+Check the [GitHub releases page](https://github.com/Astitva8292/Zenthorix/releases) for release notes and breaking changes.
+
+---
+
+## Troubleshooting
+
+### pnpm install fails
+
+**Error: `ERR_PNPM_OUTDATED_LOCKFILE`**
+
+The lockfile is out of date. Run:
+
+```bash
+pnpm install --no-frozen-lockfile
+```
+
+**Error: `ERR_PNPM_NO_PKG_MANIFEST`**
+
+You are running the command from the wrong directory. Ensure you are in the project root:
+
+```bash
+cd /path/to/Zenthorix
+```
+
+**Error: `ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL` + `SIGTERM`**
+
+A previous process is occupying the port. Kill it:
+
+```bash
+lsof -ti:3000 | xargs kill -9
+```
+
+Then retry.
+
+### Missing environment variables
+
+**Error: `Missing required environment variable: AUTH_GITHUB_ID`**
+
+The build process requires these variables at page-generation time. Add placeholder values to `.env`:
+
+```
+AUTH_GITHUB_ID=placeholder-oauth-client-id
+AUTH_GITHUB_SECRET=placeholder-oauth-client-secret
+AUTH_SECRET=any-random-string-at-least-32-chars
+```
+
+### Authentication problems
+
+**Login redirects to GitHub and fails**
+
+- Ensure your GitHub OAuth App has the correct callback URL: `http://localhost:3000/api/auth/callback/github`
+- Verify the Client ID and Client Secret in `.env` match the values on GitHub
+- Check that `NEXTAUTH_URL` is set to `http://localhost:3000`
+
+**Login page shows "Sign in with GitHub" but nothing happens**
+
+Ensure the `.env` file has valid AUTH_GITHUB_ID and AUTH_GITHUB_SECRET values. Without them, `next build` will fail.
+
+### Build errors
+
+**Error: `Type 'unknown' is not assignable to type`**
+
+This occurs in packages that use `strict: true` with no DOM types. The API package `apps/api` uses `"lib": ["ES2022"]` without `"dom"`, so `res.json()` returns `unknown`. All such cases should use `as` type assertions.
+
+If you encounter these errors, check that type assertions (`as Type`) are used after `await res.json()` calls.
+
+**`pnpm build` fails with no clear error**
+
+Build each package individually to identify the failing package:
+
+```bash
+pnpm --filter=@zenthorix/provider-sdk build
+pnpm --filter=@zenthorix/core build
+pnpm --filter=@zenthorix/agent-engine build
+pnpm --filter=@zenthorix/token-engine build
+pnpm --filter=@zenthorix/database build
+pnpm --filter=@zenthorix/plugin-sdk build
+pnpm --filter=@zenthorix/ui build
+pnpm --filter=web build
+pnpm --filter=api build
+```
+
+### Provider connection failures
+
+**OpenAI / Anthropic / DeepSeek / OpenRouter returns errors**
+
+- Verify your API key is entered correctly in Settings (no extra spaces)
+- Check that your API key has sufficient credits/quota
+- Ensure your network can reach the provider's API endpoint
+- For OpenRouter, verify you can reach `https://openrouter.ai/api/v1/chat/completions`
+
+**Ollama connection refused**
+
+- Ensure Ollama is running: `ollama serve`
+- Verify the default URL: `http://localhost:11434`
+- Check that you have pulled a model: `ollama pull llama3`
+
+### Dev server hangs
+
+**`next dev` shows no output after "Starting..."**
+
+- Ensure you are using Node.js 22 or later. Node.js 26+ is not yet supported by Next.js 15.5.19.
+- Check that port 3000 is not in use by another process
+- Delete the `.next` cache: `rm -rf apps/web/.next` and retry
 
 ---
 
@@ -248,7 +672,7 @@ zenthorix/
 │   │
 │   ├── agent-engine/               # Multi-agent orchestration
 │   │   └── src/
-│   │       ├── agent.ts            # BaseAgent (template method: execute → doExecute)
+│   │       ├── agent.ts            # BaseAgent (template method: execute -> doExecute)
 │   │       ├── state-machine.ts    # 9-state FSM with guardrails
 │   │       ├── planner-agent.ts    # Task decomposition
 │   │       ├── developer-agent.ts  # Code generation
@@ -334,105 +758,6 @@ zenthorix/
 | **AI Providers** | OpenAI, Anthropic, DeepSeek, OpenRouter, Ollama (via `@zenthorix/provider-sdk`) |
 | **Desktop** | [Tauri](https://v2.tauri.app) v2 (scaffold) |
 | **Deployment** | Vercel (via `VercelDeployService`) |
-
----
-
-## Installation
-
-### Prerequisites
-
-- **Node.js** >= 22
-- **pnpm** >= 10
-
-```bash
-# Install pnpm (if not already installed)
-corepack enable && corepack prepare pnpm@10 --activate
-
-# Clone
-git clone https://github.com/Astitva8292/Zenthorix.git
-cd Zenthorix
-
-# Install dependencies
-pnpm install
-
-# Copy environment variables
-cp .env.example .env
-# Edit .env with your API keys
-```
-
-### Development
-
-```bash
-# Start the web app (Next.js dev server)
-pnpm --filter=web dev
-# Opens at http://localhost:3000
-
-# Start the API server (in another terminal)
-pnpm --filter=api dev
-# Listens on http://localhost:3001
-```
-
-### Production Build
-
-```bash
-# Build all packages
-pnpm build
-
-# Or build selectively:
-pnpm --filter=@zenthorix/provider-sdk build
-pnpm --filter=@zenthorix/core build
-pnpm --filter=@zenthorix/agent-engine build
-pnpm --filter=@zenthorix/token-engine build
-pnpm --filter=@zenthorix/database build
-pnpm --filter=@zenthorix/plugin-sdk build
-pnpm --filter=@zenthorix/ui build
-pnpm --filter=web build
-pnpm --filter=api build
-```
-
-All 9 packages build with zero errors.
-
----
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `AUTH_SECRET` | Yes | NextAuth encryption secret (generate via `openssl rand -base64 32`) |
-| `AUTH_GITHUB_ID` | Yes | GitHub OAuth App client ID |
-| `AUTH_GITHUB_SECRET` | Yes | GitHub OAuth App client secret |
-| `NEXTAUTH_URL` | No | Defaults to `http://localhost:3000` |
-| `DATABASE_URL` | No | Defaults to `file:local.db` |
-| `ENCRYPTION_KEY` | No | AES-256 key (32 characters) for agent encryption |
-
-### API Keys (Frontend)
-
-API keys for AI providers are configured through the **Settings** dialog (gear icon in the IDE sidebar) and stored in `sessionStorage`:
-
-- OpenAI
-- Anthropic
-
-Provider routing is handled by the `AdaptiveRouter` which selects the appropriate provider based on the model requested.
-
-### Authentication
-
-Authentication uses GitHub OAuth via NextAuth v5 with JWT sessions. The login page is at `/login`. Create a GitHub OAuth App at https://github.com/settings/developers and configure the callback URL as `http://localhost:3000/api/auth/callback/github`.
-
----
-
-## Supported AI Providers
-
-| Provider | Class | `generate()` | `stream()` | `listModels()` | Authentication |
-|----------|-------|:---:|:---:|:---:|---------------|
-| [OpenAI](https://openai.com) | `OpenAIProvider` | Yes | Yes | Yes | API key |
-| [Anthropic](https://anthropic.com) | `AnthropicProvider` | Yes | Yes | No | API key (x-api-key) |
-| [DeepSeek](https://deepseek.com) | `DeepSeekProvider` | Yes | Yes | No | API key |
-| [OpenRouter](https://openrouter.ai) | `OpenRouterProvider` | Yes | Yes | Yes | API key |
-| [Ollama](https://ollama.ai) | `OllamaProvider` | Yes | Yes | Yes | None (localhost) |
-
-All providers extend `BaseProvider` from `@zenthorix/provider-sdk` and implement the `IZenthorixProvider` interface.
 
 ---
 
@@ -524,7 +849,7 @@ sequenceDiagram
     end
 ```
 
-The `AgentStateMachine` enforces this flow with 9 states (`idle → planning → proposing → reviewing → merging → building → debugging → success | error`) and guardrails including a maximum of 5 review cycles.
+The `AgentStateMachine` enforces this flow with 9 states (`idle -> planning -> proposing -> reviewing -> merging -> building -> debugging -> success | error`) and guardrails including a maximum of 5 review cycles.
 
 ---
 
@@ -536,7 +861,7 @@ The `AgentStateMachine` enforces this flow with 9 states (`idle → planning →
 | **Cost Estimator** | Calculates cost per request using per-model input/output rates |
 | **Budget Enforcer** | Tracks daily accumulated cost and truncates context when approaching limits |
 | **Semantic Cache** | Caches query-response pairs with TTL expiration (30 min, max 1,000 entries) |
-| **AST Compressor** | Extracts structural signatures (imports, type definitions, function signatures) from source code, targeting 1,000→50 line compression |
+| **AST Compressor** | Extracts structural signatures (imports, type definitions, function signatures) from source code, targeting 1,000-to-50 line compression |
 | **Context Summarizer** | Preserves system prompt and most recent messages while summarizing older history |
 | **Prompt Optimizer** | Normalizes whitespace, minifies JSON, removes filler words |
 | **Knowledge Ingestion** | Splits files into 512-token overlapping chunks for retrieval |
@@ -562,7 +887,7 @@ The `AgentStateMachine` enforces this flow with 9 states (`idle → planning →
 
 - **Streaming** — All AI providers support `AsyncIterable<string>` streaming for real-time token delivery.
 - **Semantic Cache** — Repeated queries return cached responses, avoiding redundant API calls.
-- **AST Compression** — Reduces code context by ~95% (1,000 → 50 lines) via structural extraction.
+- **AST Compression** — Reduces code context by ~95% (1,000 -> 50 lines) via structural extraction.
 - **Virtual File System** — In-memory file operations with snapshot-based history (max 20 snapshots).
 - **Selective Context** — Only active file content is sent in full; compressed signatures for inactive files.
 - **Budget Enforcement** — Prevents runaway costs by truncating context and capping daily spend.
@@ -598,6 +923,37 @@ pnpm clean
 
 ---
 
+## Contributing
+
+Contributions are welcome. Zenthorix is in active development and there are many areas where help is needed.
+
+### Getting Started
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/my-feature`)
+3. Make your changes
+4. Ensure all packages build (`pnpm build`)
+5. Commit with a conventional commit message (`feat:`, `fix:`, `docs:`, etc.)
+6. Push to your fork and open a pull request
+
+### Areas for Contribution
+
+- **Wiring the agent engine to the chat UI** — The agent engine is fully implemented but not connected to the frontend
+- **Adding syntax highlighting** — Replace the textarea editor with CodeMirror or Monaco
+- **Real terminal emulation** — Integrate xterm.js with a real PTY backend
+- **Expanding test coverage** — The current test suite is minimal
+- **CI/CD pipeline** — Set up GitHub Actions for automated testing
+- **New AI providers** — Implement the `IZenthorixProvider` interface for additional providers
+
+### Guidelines
+
+- Follow the existing code style — the ESLint config enforces TypeScript conventions
+- Use conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, etc.)
+- Add tests for new functionality
+- Update the README if you change APIs or add features
+
+---
+
 ## Roadmap
 
 ### Completed
@@ -621,7 +977,6 @@ pnpm clean
 - [x] Tauri desktop scaffold
 - [x] Fastify API with 21 services
 - [x] 9/9 Turbo tasks building with zero errors
-- [x] Monorepo with pnpm + Turborepo
 
 ### In Progress
 
@@ -635,8 +990,9 @@ pnpm clean
 
 ### Planned
 
-- [ ] Visual canvas with React Flow
+- [ ] Chat-to-agent-engine integration
 - [ ] Plugin marketplace with install flow
+- [ ] Visual canvas with React Flow
 - [ ] Voice transcription (speech-to-text)
 - [ ] Vector database for knowledge base retrieval
 - [ ] Desktop builds via Tauri
@@ -649,23 +1005,35 @@ pnpm clean
 
 ## FAQ
 
-**Does Zenthorix replace my IDE?**
-No. Zenthorix is a complementary platform that runs in the browser (or as a Tauri desktop app). It provides an agent-assisted development environment alongside your existing tools.
-
 **Can I use my own API keys?**
-Yes. API keys for OpenAI and Anthropic are configured through the Settings dialog. The app also supports OpenRouter (which provides access to many models with a single key) and local models via Ollama.
+Yes. API keys for OpenAI and Anthropic are configured through the Settings dialog (gear icon in the IDE). DeepSeek and OpenRouter keys are in `.env.example` but do not yet have a UI field. Ollama requires no API key.
 
-**Does it work without an internet connection?**
-Partially. The IDE itself (file tree, editor, terminal UI) works offline. AI features require API access to one of the supported providers. Ollama can run entirely locally.
+**Does Zenthorix work offline?**
+Partially. The IDE itself (file tree, editor, terminal UI, command palette, notifications) works offline. AI features require API access to one of the supported providers. Ollama can run entirely locally for offline AI features.
 
-**What models are supported?**
-Any model available through OpenAI, Anthropic, DeepSeek, OpenRouter, or Ollama. The `AdaptiveRouter` selects the appropriate provider based on the model name and task complexity.
+**Which AI providers are supported?**
+OpenAI, Anthropic (Claude), DeepSeek, OpenRouter, and Ollama. All five implement both `generate()` and `stream()`. See the [Connecting AI Providers](#connecting-ai-providers) section.
+
+**Can I use Ollama locally?**
+Yes. Run `ollama serve` on your machine and Zenthorix connects automatically at `http://localhost:11434`. Pull any model (e.g., `ollama pull llama3`) and it appears in the model list.
+
+**Is Docker required?**
+No. Docker is not required to run Zenthorix. The codebase includes a `DockerSecurity` utility class for building container security policies, but no Docker configuration or containerization is implemented.
+
+**Does Zenthorix collect my API keys?**
+No. API keys are stored in `sessionStorage` in your browser (cleared when you close the tab) or in a local SQLite database with AES-256-GCM encryption. No data is sent to any server beyond the AI provider APIs you configure.
 
 **Can I build my own agent?**
 Yes. Use the `CustomAgent` class or extend `BaseAgent` and override `doExecute()`. Custom agents can be registered with the engine and invoked by name.
 
 **Is there a hosted version?**
 Not yet. Zenthorix is self-hosted. Deployment services (Vercel, Docker) are available as code-level integrations but no hosted platform exists.
+
+**How do I update Zenthorix?**
+Pull the latest changes from the repository and rebuild. See [Updating Zenthorix](#updating-zenthorix) for detailed instructions.
+
+**Can I contribute?**
+Yes. See the [Contributing](#contributing) section for guidelines.
 
 ---
 
